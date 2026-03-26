@@ -17,3 +17,5 @@ A simple Streamlit app template for you to modify!
    ```
    $ streamlit run streamlit_app.py
    ```
+
+   "Este é o MVP do EcoDoa, um mural de doações para Itajaí/SC. Desenvolvido para a Etapa 1 do projeto integrador."
