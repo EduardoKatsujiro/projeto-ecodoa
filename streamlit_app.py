@@ -1,31 +1,63 @@
 import streamlit as st
 
-# Configurações do App
-st.set_page_config(page_title="EcoDoa MVP", page_icon="🌱")
+# 1. Inicialização da Memória (Só acontece uma vez)
+if 'lista_doacoes' not in st.session_state:
+    st.session_state.lista_doacoes = [
+        {"item": "Cadeira Office", "doador": "Carlos R.", "distancia": "500m", "status": "Disponível"},
+        {"item": "Sofá 3 Lugares", "doador": "Maria S.", "distancia": "1.2km", "status": "Disponível"}
+    ]
 
-st.title("🌱 EcoDoa: Mural de Doações")
-st.caption("📍 Centro - Itajaí, SC")
+# Função para adicionar o item (Executa ANTES de recarregar a página)
+def adicionar_item():
+    item = st.session_state.temp_item
+    nome = st.session_state.temp_nome
+    bairro = st.session_state.temp_bairro
+    
+    if item and nome:
+        nova_doacao = {
+            "item": item,
+            "doador": nome,
+            "distancia": f"Bairro: {bairro}",
+            "status": "Disponível"
+        }
+        st.session_state.lista_doacoes.append(nova_doacao)
+        st.toast(f"✅ {item} cadastrado com sucesso!")
 
-# Menu de Navegação
-aba = st.tabs(["📋 Mural", "➕ Doar Item"])
+# Configurações de Design
+st.set_page_config(page_title="EcoDoa - Itajaí", page_icon="🌱")
+st.title("🌱 EcoDoa - Itajaí")
 
-with aba[0]:
-    st.write("### Itens Disponíveis")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info("**Cadeira Office**\nDoador: Carlos\nDistância: 500m")
-        if st.button("Reservar Cadeira"):
-            st.success("Reserva solicitada!")
-    with col2:
-        st.info("**Sofá 3 Lugares**\nDoador: Maria\nDistância: 1.2km")
-        if st.button("Reservar Sofá"):
-            st.success("Reserva solicitada!")
+# 2. Navegação por Abas
+aba1, aba2 = st.tabs(["📋 Mural de Itens", "➕ Cadastrar Doação"])
 
-with aba[1]:
-    st.write("### Cadastrar Doação")
-    with st.form("form"):
-        nome = st.text_input("O que você vai doar?")
-        desc = st.text_area("Estado do item")
-        if st.form_submit_button("Publicar"):
-            st.balloons()
-            st.success("Publicado com sucesso!")
+with aba1:
+    st.header("Itens Perto de Você")
+    # Loop para mostrar os itens (do mais novo para o mais antigo)
+    for i, d in enumerate(reversed(st.session_state.lista_doacoes)):
+        # Ajustando o índice original por causa do 'reversed'
+        idx_original = len(st.session_state.lista_doacoes) - 1 - i
+        with st.container(border=True):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.subheader(f"📦 {d['item']}")
+                st.write(f"👤 Doador: {d['doador']} | 📍 {d['distancia']}")
+                st.write(f"Status: **{d['status']}**")
+            with col2:
+                if d['status'] == "Disponível":
+                    if st.button(f"Reservar", key=f"btn_{idx_original}"):
+                        st.session_state.lista_doacoes[idx_original]['status'] = "RESERVADO"
+                        st.rerun()
+                else:
+                    st.error("Reservado")
+
+with aba2:
+    st.header("O que você deseja desapegar?")
+    # Campos de entrada vinculados ao estado temporário
+    st.text_input("Nome do objeto", key="temp_item")
+    st.text_input("Seu nome", key="temp_nome")
+    st.selectbox("Bairro", ["Centro", "Fazenda", "Vila Operária", "Cordeiros"], key="temp_bairro")
+    
+    # Botão que chama a função de adicionar antes de qualquer coisa
+    st.button("Publicar Doação agora", on_click=adicionar_item)
+    
+    st.info("Após clicar em 'Publicar', verifique a aba 'Mural de Itens'.")
